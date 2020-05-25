@@ -18,9 +18,10 @@ namespace ParameterWriter
             View curView = doc.ActiveView;
             //Dictionary<string, HashSet<object>> paramsbase = new Dictionary<string, HashSet<object>>();
             //HashSet<string> parameters = new HashSet<string>();
-            Dictionary<string, HashSet<string>> valuesBase = new Dictionary<string, HashSet<string>>();
+            
 
             List<ElementId> elemIds = new List<ElementId>();
+            FilteredElementCollector col;
 
             Selection sel = commandData.Application.ActiveUIDocument.Selection;
             List<ElementId> selids = sel.GetElementIds().ToList();
@@ -32,12 +33,15 @@ namespace ParameterWriter
             }
             else
             {
-                elemIds = new FilteredElementCollector(doc, curView.Id)
-                    .WhereElementIsNotElementType()
+                col = new FilteredElementCollector(doc, curView.Id)
+                    .WhereElementIsNotElementType();
+                elemIds = col
                     .ToElementIds()
                     .ToList();
             }
 
+            //заполняю варианты значений для всех параметров
+            Dictionary<string, HashSet<string>> valuesBase = new Dictionary<string, HashSet<string>>();
             foreach (ElementId id in elemIds)
             {
                 Element elem = doc.GetElement(id);
@@ -60,11 +64,14 @@ namespace ParameterWriter
             }
 
             
-
+            //открываю диалоговое окно
             FormWriter form = new FormWriter(haveSelectedElems, valuesBase);
             if (form.ShowDialog() != System.Windows.Forms.DialogResult.OK) return Result.Cancelled;
             string param = form.paramName;
-            string value = form.paramValue;
+            string source = form.source;
+            //string sourceParamName = form.otherParamName;
+
+
 
             int count = 0;
 
@@ -79,8 +86,7 @@ namespace ParameterWriter
                     foreach(Element elem in col2)
                     {
                         Parameter p = elem.LookupParameter(param);
-                        if (p == null) continue;
-                        MyParameter.SetValue(p, value);
+                        MyParameter.SetValue(elem, param, source, form.sourceMode);
                         count++;
                     }
                         
@@ -89,11 +95,8 @@ namespace ParameterWriter
                 {
                     foreach (ElementId id in elemIds)
                     {
-                        Element selem = doc.GetElement(id);
-                        Parameter p = selem.LookupParameter(param);
-                        if (p == null) continue;
-                        if (p.IsReadOnly) continue;
-                        MyParameter.SetValue(p, value);
+                        Element elem = doc.GetElement(id);
+                        MyParameter.SetValue(elem, param, source, form.sourceMode);
                         count++;
                     }
                 }

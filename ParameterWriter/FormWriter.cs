@@ -17,14 +17,21 @@ namespace ParameterWriter
         OnCurrentView
     }
 
+    public enum SourceMode
+    {
+        FixValue,
+        OtherParameter
+    }
+
     public partial class FormWriter : Form
     {
         //public Dictionary<string, HashSet<object>> valuesBase;
         //public HashSet<string> parametersList;
 
         public string paramName;
-        public string paramValue;
+        public string source;
         public WriterMode writerMode;
+        public SourceMode sourceMode;
         Dictionary<string, HashSet<string>> values;
 
 
@@ -36,6 +43,7 @@ namespace ParameterWriter
             List<string> paramsList = ValuesBase.Keys.ToList(); //parameters.ToList();
             paramsList.Sort();
             comboBoxParameter.DataSource = paramsList;
+            comboBoxSourceParameter.DataSource = paramsList.ToList();
 
             if(haveSelectedElements)
             {
@@ -50,11 +58,21 @@ namespace ParameterWriter
         private void buttonOk_Click(object sender, EventArgs e)
         {
             paramName = comboBoxParameter.Text;
-            paramValue = comboBoxValue.Text;
 
             if (radioSelectedElements.Checked) writerMode = WriterMode.OnlySelected;
             if (radioViewElements.Checked) writerMode = WriterMode.OnCurrentView;
             if (radioAllElements.Checked) writerMode = WriterMode.AllInProject;
+
+            if (radioButtonWriteValue.Checked)
+            {
+                sourceMode = SourceMode.FixValue;
+                source = comboBoxValue.Text;
+            }
+            if (radioButtonWriteOtherPAram.Checked)
+            {
+                sourceMode = SourceMode.OtherParameter;
+                source = comboBoxSourceParameter.Text;
+            }
 
             this.DialogResult = DialogResult.OK;
             this.Close();
@@ -72,6 +90,18 @@ namespace ParameterWriter
             List<string> curValues = values[curParam].ToList(); ;
             curValues.Sort();
             comboBoxValue.DataSource = curValues;
+        }
+
+        private void radioButtonWriteValue_CheckedChanged(object sender, EventArgs e)
+        {
+            comboBoxValue.Enabled = true;
+            comboBoxSourceParameter.Enabled = false;
+        }
+
+        private void radioButton1_CheckedChanged(object sender, EventArgs e)
+        {
+            comboBoxValue.Enabled = false;
+            comboBoxSourceParameter.Enabled = true;
         }
     }
 }

@@ -177,9 +177,60 @@ namespace ParameterWriter
             }
         }
 
+        /// <summary>
+        /// Запись в элемент значения параметра
+        /// </summary>
+        /// <param name="elem">Элемент для записи</param>
+        /// <param name="targetParamName">Имя параметр, в который будем записывать</param>
+        /// <param name="source">Фиксированное значения для записи или имя параметра-источника</param>
+        /// <param name="sourceMode">Определяет, будет записывать фиксирвоанное значение или будет копировать из другого параметра</param>
+        public static void SetValue(Element elem, string targetParamName, string source, SourceMode sourceMode)
+        {
+            Parameter targetParam = elem.LookupParameter(targetParamName);
+            if (targetParam == null) return;
+            if (targetParam.IsReadOnly) return;
+            switch (sourceMode)
+            {
+                case SourceMode.FixValue:
+                    SetFixValue(targetParam, source);
+                    break;
+                case SourceMode.OtherParameter:
+                    Parameter sourceParam = elem.LookupParameter(source);
+                    SetValueByParam(sourceParam, targetParam);
+                    break;
+            }
+        }
 
+        public static void SetValueByParam(Parameter sourceParam, Parameter targetParam)
+        {
+            if (sourceParam == null) return;
+            if (!sourceParam.HasValue) return;
 
-        public static void SetValue(Parameter param, string value)
+            if (sourceParam.StorageType != targetParam.StorageType)
+                throw new Exception("StorageType of parameters are different!");
+
+            switch (targetParam.StorageType)
+            {
+                case StorageType.None:
+                    break;
+                case StorageType.Integer:
+                    targetParam.Set(sourceParam.AsInteger());
+                    break;
+                case StorageType.Double:
+                    targetParam.Set(sourceParam.AsDouble());
+                    break;
+                case StorageType.String:
+                    targetParam.Set(sourceParam.AsString());
+                    break;
+                case StorageType.ElementId:
+                    targetParam.Set(sourceParam.AsElementId());
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        public static void SetFixValue(Parameter param, string value)
         {
             switch (param.StorageType)
             {
