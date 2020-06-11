@@ -20,7 +20,8 @@ namespace ParameterWriter
     public enum SourceMode
     {
         FixValue,
-        OtherParameter
+        OtherParameter,
+        JoinParameters
     }
 
     public partial class FormWriter : Form
@@ -30,6 +31,7 @@ namespace ParameterWriter
 
         public string paramName;
         public string source;
+        public Dictionary<Autodesk.Revit.DB.BuiltInCategory, List<string>> joinParamsBase;
         public WriterMode writerMode;
         public SourceMode sourceMode;
         Dictionary<string, HashSet<string>> values;
@@ -45,7 +47,7 @@ namespace ParameterWriter
             comboBoxParameter.DataSource = paramsList;
             comboBoxSourceParameter.DataSource = paramsList.ToList();
 
-            if(haveSelectedElements)
+            if (haveSelectedElements)
             {
                 radioSelectedElements.Checked = true;
                 radioSelectedElements.Enabled = false;
@@ -63,16 +65,6 @@ namespace ParameterWriter
             if (radioViewElements.Checked) writerMode = WriterMode.OnCurrentView;
             if (radioAllElements.Checked) writerMode = WriterMode.AllInProject;
 
-            if (radioButtonWriteValue.Checked)
-            {
-                sourceMode = SourceMode.FixValue;
-                source = comboBoxValue.Text;
-            }
-            if (radioButtonWriteOtherPAram.Checked)
-            {
-                sourceMode = SourceMode.OtherParameter;
-                source = comboBoxSourceParameter.Text;
-            }
 
             this.DialogResult = DialogResult.OK;
             this.Close();
@@ -96,12 +88,41 @@ namespace ParameterWriter
         {
             comboBoxValue.Enabled = true;
             comboBoxSourceParameter.Enabled = false;
+            buttonSetJoinedParameters.Enabled = false;
+            this.sourceMode = SourceMode.FixValue;
+            source = comboBoxValue.Text;
         }
 
         private void radioButton1_CheckedChanged(object sender, EventArgs e)
         {
             comboBoxValue.Enabled = false;
+            buttonSetJoinedParameters.Enabled = false;
             comboBoxSourceParameter.Enabled = true;
+            this.sourceMode = SourceMode.OtherParameter;
+            source = comboBoxSourceParameter.Text;
+        }
+
+        private void radioButtonWriteJoinParameters_CheckedChanged(object sender, EventArgs e)
+        {
+            comboBoxSourceParameter.Enabled = false;
+            comboBoxValue.Enabled = false;
+            buttonSetJoinedParameters.Enabled = true;
+            this.sourceMode = SourceMode.JoinParameters;
+        }
+
+        private void radioSelectedElements_CheckedChanged(object sender, EventArgs e)
+        {
+            this.writerMode = WriterMode.OnlySelected;
+        }
+
+        private void radioViewElements_CheckedChanged(object sender, EventArgs e)
+        {
+            this.writerMode = WriterMode.OnCurrentView;
+        }
+
+        private void radioAllElements_CheckedChanged(object sender, EventArgs e)
+        {
+            this.writerMode = WriterMode.AllInProject;
         }
     }
 }
