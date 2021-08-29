@@ -18,7 +18,8 @@ namespace ParameterWriter
             View curView = doc.ActiveView;
             //Dictionary<string, HashSet<object>> paramsbase = new Dictionary<string, HashSet<object>>();
             //HashSet<string> parameters = new HashSet<string>();
-            
+
+            WriterSettings sets = WriterSettings.Activate();
 
             List<ElementId> elemIds = new List<ElementId>();
             FilteredElementCollector col;
@@ -65,12 +66,10 @@ namespace ParameterWriter
 
             
             //открываю диалоговое окно
-            FormWriter form = new FormWriter(haveSelectedElems, valuesBase);
+            FormWriter form = new FormWriter(haveSelectedElems, valuesBase, sets);
             if (form.ShowDialog() != System.Windows.Forms.DialogResult.OK) return Result.Cancelled;
-            string param = form.paramName;
-            string source = form.source;
+            sets = form.sets;
             //string sourceParamName = form.otherParamName;
-
 
 
             int count = 0;
@@ -78,6 +77,7 @@ namespace ParameterWriter
             using (Transaction t = new Transaction(doc))
             {
                 t.Start("Заполнятор");
+
                 if(form.writerMode == WriterMode.AllInProject)
                 {
                     FilteredElementCollector col2 = new FilteredElementCollector(doc)
@@ -85,8 +85,7 @@ namespace ParameterWriter
 
                     foreach(Element elem in col2)
                     {
-                        Parameter p = elem.LookupParameter(param);
-                        MyParameter.SetValue(elem, param, source, form.sourceMode);
+                        MyParameter.SetValue(elem, sets);
                         count++;
                     }
                         
@@ -96,7 +95,7 @@ namespace ParameterWriter
                     foreach (ElementId id in elemIds)
                     {
                         Element elem = doc.GetElement(id);
-                        MyParameter.SetValue(elem, param, source, form.sourceMode);
+                        MyParameter.SetValue(elem, sets);
                         count++;
                     }
                 }
@@ -104,7 +103,8 @@ namespace ParameterWriter
                 t.Commit();
             }
 
-            BalloonTip.Show(param + " заполнен!", "Обработано элементов: " + count.ToString());
+            sets.Save();
+            BalloonTip.Show(sets.targetParamName + " заполнен!", "Обработано элементов: " + count.ToString());
 
             return Result.Succeeded;
         }

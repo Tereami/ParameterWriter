@@ -176,7 +176,7 @@
         </Reference>
       </ItemGroup>
     </When>
-  </Choose>  
+  </Choose>
   <ItemGroup>
     <Compile Include="App.cs" />
     <Compile Include="BalloonTip.cs" />
@@ -189,6 +189,7 @@
     </Compile>
     <Compile Include="MyParameter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="WriterSettings.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="FormWriter.resx">

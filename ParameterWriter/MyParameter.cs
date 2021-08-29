@@ -184,12 +184,13 @@ namespace ParameterWriter
         /// <param name="targetParamName">Имя параметр, в который будем записывать</param>
         /// <param name="source">Фиксированное значения для записи или имя параметра-источника</param>
         /// <param name="sourceMode">Определяет, будет записывать фиксирвоанное значение или будет копировать из другого параметра</param>
-        public static void SetValue(Element elem, string targetParamName, string source, SourceMode sourceMode)
+        public static void SetValue(Element elem, WriterSettings sets)
         {
-            Parameter targetParam = elem.LookupParameter(targetParamName);
+            Parameter targetParam = elem.LookupParameter(sets.targetParamName);
+            string source = sets.sourceParameterName;
             if (targetParam == null) return;
             if (targetParam.IsReadOnly) return;
-            switch (sourceMode)
+            switch (sets.sourceMode)
             {
                 case SourceMode.FixValue:
                     SetFixValue(targetParam, source);
@@ -198,7 +199,86 @@ namespace ParameterWriter
                     Parameter sourceParam = elem.LookupParameter(source);
                     SetValueByParam(sourceParam, targetParam);
                     break;
+                case SourceMode.Constructor:
+                    SetValueByConstructor(source, elem, targetParam);
+                    break;
             }
+        }
+
+        public static void SetValueByConstructor(string constructor, Element sourceElem, Parameter targetParam)
+        {
+            if (targetParam.Definition.ParameterType != ParameterType.Text)
+            {
+                string msg = "Заполнение через Конструктор доступно только для текстовых параметров";
+                Autodesk.Revit.UI.TaskDialog.Show("Ошибка", msg);
+                throw new Exception(msg);
+            }
+            string result = "";
+
+            string prefix = constructor.Split('<').First();
+            result = result + prefix;
+
+            string[] sa = constructor.Split('<');
+            for (int i = 0; i < sa.Length; i++)
+            {
+                string s = sa[i];
+                if (!s.Contains(">")) continue;
+
+                string paramName = s.Split('>').First();
+                string separator = s.Split('>').Last();
+
+                string val = GetParameterValAsString(sourceElem, paramName);
+
+                result = result + val + separator;
+            }
+            targetParam.Set(result);
+        }
+
+        public static Parameter SuperGetParameter(Element Elem, string ParamName)
+        {
+            Parameter param = Elem.LookupParameter(ParamName);
+            if (param == null)
+            {
+                Element eltype = Elem.Document.GetElement(Elem.GetTypeId());
+                param = eltype.LookupParameter(ParamName);
+            }
+            return param;
+        }
+
+        public static string GetParameterValAsString(Element e, string paramName)
+        {
+            Parameter param = SuperGetParameter(e, paramName);
+            if (param == null) return string.Empty;
+
+            string val = string.Empty;
+
+            switch (param.StorageType)
+            {
+                case StorageType.None:
+                    return string.Empty;
+                case StorageType.Integer:
+                    val = param.AsInteger().ToString();
+                    break;
+                case StorageType.Double:
+                    double doubval = param.AsDouble();
+#if R2022
+                    doubval = UnitUtils.ConvertFromInternalUnits(param.AsDouble(), param.GetUnitTypeId());
+#else
+                    doubval = UnitUtils.ConvertFromInternalUnits(param.AsDouble(), param.DisplayUnitType);
+#endif
+                    val = doubval.ToString("F0");
+                    break;
+                case StorageType.String:
+                    val = param.AsString();
+                    break;
+                case StorageType.ElementId:
+                    val = param.AsElementId().IntegerValue.ToString();
+                    break;
+            }
+            if (string.IsNullOrEmpty(val))
+                return string.Empty;
+            else
+                return val;
         }
 
         public static void SetValueByParam(Parameter sourceParam, Parameter targetParam)

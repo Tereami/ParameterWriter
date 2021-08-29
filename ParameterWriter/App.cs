@@ -14,7 +14,7 @@ namespace ParameterWriter
         public Result OnStartup(UIControlledApplication application)
         {
             assemblyPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
-            string tabName = "Weandrevit";
+            string tabName = "BIM-STARTER TEST";
             try { application.CreateRibbonTab(tabName); } catch { }
             string panelName = "Управление";
             RibbonPanel panel = null;
