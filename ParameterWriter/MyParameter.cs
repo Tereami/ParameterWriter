@@ -241,7 +241,10 @@ namespace ParameterWriter
                     break;
                 case StorageType.Double:
                     double doubleVal = double.Parse(value);
-                    if (param.Definition.UnitType == UnitType.UT_Length) doubleVal /= 304.8;
+
+                    if (ParamIsLength(param))
+                        doubleVal /= 304.8;
+
                     param.Set(doubleVal);
                     break;
                 case StorageType.String:
@@ -267,7 +270,8 @@ namespace ParameterWriter
                     return param.AsInteger().ToString();
                 case StorageType.Double:
                     double doubleval = param.AsDouble();
-                    if (param.Definition.UnitType == UnitType.UT_Length) doubleval *= 304.8;
+                    if (ParamIsLength(param))
+                        doubleval *= 304.8;
                     return doubleval.ToString("F1");
                 case StorageType.String:
                     return param.AsString();
@@ -279,5 +283,17 @@ namespace ParameterWriter
             }
         }
 
+        private static bool ParamIsLength(Parameter param)
+        {
+            bool isMillimeters = false;
+#if R2022
+            ForgeTypeId forgeType = param.GetUnitTypeId();
+            string unittype = forgeType.TypeId;
+            isMillimeters = unittype.Contains("millimeters");
+#else
+            isMillimeters = param.Definition.UnitType == UnitType.UT_Length;
+#endif
+            return isMillimeters;
+        }
     }
 }
