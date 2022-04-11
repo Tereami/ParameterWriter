@@ -180,16 +180,17 @@ namespace ParameterWriter
         /// <summary>
         /// Запись в элемент значения параметра
         /// </summary>
-        /// <param name="elem">Элемент для записи</param>
-        /// <param name="targetParamName">Имя параметр, в который будем записывать</param>
-        /// <param name="source">Фиксированное значения для записи или имя параметра-источника</param>
-        /// <param name="sourceMode">Определяет, будет записывать фиксирвоанное значение или будет копировать из другого параметра</param>
         public static void SetValue(Element elem, WriterSettings sets)
         {
             Parameter targetParam = elem.LookupParameter(sets.targetParamName);
             string source = sets.sourceParameterName;
             if (targetParam == null) return;
-            if (targetParam.IsReadOnly) return;
+            if (targetParam.IsReadOnly)
+            {
+                string errmsg = "Параметр " + sets.targetParamName + " недоступен для записи";
+                System.Windows.Forms.MessageBox.Show(errmsg);
+                throw new Exception(errmsg);
+            }
             switch (sets.sourceMode)
             {
                 case SourceMode.FixValue:
@@ -207,7 +208,12 @@ namespace ParameterWriter
 
         public static void SetValueByConstructor(string constructor, Element sourceElem, Parameter targetParam)
         {
+#if R2022 || R2023
+            ForgeTypeId ft = targetParam.Definition.GetDataType();
+            if (ft != SpecTypeId.String.Text)
+#else
             if (targetParam.Definition.ParameterType != ParameterType.Text)
+#endif
             {
                 string msg = "Заполнение через Конструктор доступно только для текстовых параметров";
                 Autodesk.Revit.UI.TaskDialog.Show("Ошибка", msg);
@@ -261,7 +267,7 @@ namespace ParameterWriter
                     break;
                 case StorageType.Double:
                     double doubval = param.AsDouble();
-#if R2022
+#if R2022 || R2023
                     doubval = UnitUtils.ConvertFromInternalUnits(param.AsDouble(), param.GetUnitTypeId());
 #else
                     doubval = UnitUtils.ConvertFromInternalUnits(param.AsDouble(), param.DisplayUnitType);
@@ -320,11 +326,15 @@ namespace ParameterWriter
                     param.Set(int.Parse(value));
                     break;
                 case StorageType.Double:
-                    double doubleVal = double.Parse(value);
+                    double doubleValByUser = double.Parse(value);
 
-                    if (ParamIsLength(param))
-                        doubleVal /= 304.8;
-
+#if R2022 || R2023
+                    ForgeTypeId units = param.GetUnitTypeId();
+                    double doubleVal = UnitUtils.ConvertToInternalUnits(doubleValByUser, units);
+#else
+                    DisplayUnitType units = param.DisplayUnitType;
+                    double doubleVal = UnitUtils.ConvertToInternalUnits(doubleValByUser, units);
+#endif
                     param.Set(doubleVal);
                     break;
                 case StorageType.String:
@@ -340,40 +350,19 @@ namespace ParameterWriter
             }
         }
 
-        public static string GetAsString(Parameter param)
-        {
-            switch (param.StorageType)
-            {
-                case StorageType.None:
-                    return "";
-                case StorageType.Integer:
-                    return param.AsInteger().ToString();
-                case StorageType.Double:
-                    double doubleval = param.AsDouble();
-                    if (ParamIsLength(param))
-                        doubleval *= 304.8;
-                    return doubleval.ToString("F1");
-                case StorageType.String:
-                    return param.AsString();
-                case StorageType.ElementId:
-                    int intval = param.AsElementId().IntegerValue;
-                    return intval.ToString();
-                default:
-                    return "";
-            }
-        }
 
-        private static bool ParamIsLength(Parameter param)
-        {
-            bool isMillimeters = false;
-#if R2022
-            ForgeTypeId forgeType = param.GetUnitTypeId();
-            string unittype = forgeType.TypeId;
-            isMillimeters = unittype.Contains("millimeters");
-#else
-            isMillimeters = param.Definition.UnitType == UnitType.UT_Length;
-#endif
-            return isMillimeters;
-        }
+        /* private static bool ParamIsLength(Parameter param)
+         {
+             bool isMillimeters = false;
+ #if R2022 || R2023
+             //ForgeTypeId forgeType = param.GetUnitTypeId();
+             //string unittype = forgeType.TypeId;
+             ForgeTypeId forgeType = param.Definition.GetDataType();
+             isMillimeters = forgeType == SpecTypeId.Length;
+ #else
+             isMillimeters = param.Definition.UnitType == UnitType.UT_Length;
+ #endif
+             return isMillimeters;
+         }*/
     }
 }

@@ -50,7 +50,7 @@ namespace ParameterWriter
                 foreach (Parameter p in pset)
                 {
                     string pname = p.Definition.Name;
-                    string val = MyParameter.GetAsString(p);
+                    string val = MyParameter.GetParameterValAsString(elem, pname);
                     
                     //parameters.Add(pname);
                     if(valuesBase.ContainsKey(pname))
