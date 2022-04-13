@@ -35,6 +35,13 @@ namespace ParameterWriter
                             "ParameterWriter.Command")
                             ) as PushButton;
 
+            PushButton btnView = panel.AddItem(new PushButtonData(
+                            "WriteView",
+                            "На виде",
+                            assemblyPath,
+                            "ParameterWriter.CommandWriteView")
+                            ) as PushButton;
+
 
 
 

@@ -206,11 +206,18 @@
     <Compile Include="App.cs" />
     <Compile Include="BalloonTip.cs" />
     <Compile Include="Command.cs" />
+    <Compile Include="CommandWriteView.cs" />
     <Compile Include="FormWriter.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="FormWriter.Designer.cs">
       <DependentUpon>FormWriter.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormWriteView.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormWriteView.Designer.cs">
+      <DependentUpon>FormWriteView.cs</DependentUpon>
     </Compile>
     <Compile Include="MyParameter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -219,6 +226,9 @@
   <ItemGroup>
     <EmbeddedResource Include="FormWriter.resx">
       <DependentUpon>FormWriter.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormWriteView.resx">
+      <DependentUpon>FormWriteView.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
