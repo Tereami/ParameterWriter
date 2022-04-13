@@ -182,7 +182,7 @@ namespace ParameterWriter
         /// </summary>
         public static void SetValue(Element elem, WriterSettings sets)
         {
-            Parameter targetParam = elem.LookupParameter(sets.targetParamName);
+            Parameter targetParam = MyParameter.SuperGetParameter(elem, sets.targetParamName);
             string source = sets.sourceParameterName;
             if (targetParam == null) return;
             if (targetParam.IsReadOnly)
@@ -197,7 +197,7 @@ namespace ParameterWriter
                     SetFixValue(targetParam, source);
                     break;
                 case SourceMode.OtherParameter:
-                    Parameter sourceParam = elem.LookupParameter(source);
+                    Parameter sourceParam = MyParameter.SuperGetParameter(elem, source);
                     SetValueByParam(sourceParam, targetParam);
                     break;
                 case SourceMode.Constructor:

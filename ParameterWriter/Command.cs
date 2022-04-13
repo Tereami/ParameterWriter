@@ -46,21 +46,31 @@ namespace ParameterWriter
             foreach (ElementId id in elemIds)
             {
                 Element elem = doc.GetElement(id);
-                ParameterSet pset = elem.Parameters;
-                foreach (Parameter p in pset)
+                List<Parameter> allParams = new List<Parameter>();
+                foreach (Parameter p in elem.Parameters)
+                {
+                    allParams.Add(p);
+                }
+
+                ElementId typeId = elem.GetTypeId();
+                if (typeId == null) continue;
+                if (typeId == ElementId.InvalidElementId) continue;
+                ElementType elemType = doc.GetElement(typeId) as ElementType;
+                if (elemType == null) continue;
+                foreach(Parameter p in elemType.Parameters)
+                {
+                    allParams.Add(p);
+                }
+
+                foreach(Parameter p in allParams)
                 {
                     string pname = p.Definition.Name;
                     string val = MyParameter.GetParameterValAsString(elem, pname);
-                    
-                    //parameters.Add(pname);
-                    if(valuesBase.ContainsKey(pname))
-                    {
+
+                    if (valuesBase.ContainsKey(pname))
                         valuesBase[pname].Add(val);
-                    }
                     else
-                    {
                         valuesBase.Add(pname, new HashSet<string> { val });
-                    }
                 }
             }
 
