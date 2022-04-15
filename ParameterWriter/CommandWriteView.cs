@@ -12,15 +12,11 @@ Zuev Aleksandr, 2022, all rigths reserved.
 */
 #endregion
 #region usings
+using Autodesk.Revit.DB;
+using Autodesk.Revit.UI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.IO;
-using System.Xml.Serialization;
-using Autodesk.Revit.DB;
-using Autodesk.Revit.UI;
 #endregion
 
 
@@ -34,116 +30,51 @@ namespace ParameterWriter
         {
             Document doc = commandData.Application.ActiveUIDocument.Document;
 
-            WriterSettings sets = WriterSettings.Activate();
-            FormWriteView form = new FormWriteView(sets);
-            if (form.ShowDialog() != System.Windows.Forms.DialogResult.OK)
-                return Result.Cancelled;
-
-            sets = form.curSettings;
-
-            List<View> views = new FilteredElementCollector(doc)
-                    .WhereElementIsNotElementType()
-                    .OfClass(typeof(View))
-                    .Cast<View>()
-                    .ToList();
-            if (sets.WriteViewOnlySheets)
+            List<View> views = doc.GetFiller3dViews();
+            if (views.Count == 0)
             {
-                views = views
-                    .Where(i => ViewIsOnSheet(i))
-                    .ToList();
+                string msg = "Не найдены подходящие виды. "
+                    + "Имя вида должно быть: Filler#Параметр=Значение.";
+                TaskDialog.Show("Error", msg);
+                return Result.Failed;
             }
 
-            Dictionary<int, List<View>> elementsOnViews = new Dictionary<int, List<View>>();
-
-            foreach (View curView in views)
-            {
-                if (curView.IsTemplate) continue;
-                FilteredElementCollector viewCol = new FilteredElementCollector(doc, curView.Id)
-                    .WhereElementIsNotElementType();
-
-                foreach (Element elem in viewCol)
-                {
-                    int elemId = elem.Id.IntegerValue;
-                    if (elementsOnViews.ContainsKey(elemId))
-                    {
-                        if (sets.WriteViewAll)
-                            elementsOnViews[elemId].Add(curView);
-                        else
-                            continue;
-                    }
-                    else
-                    {
-                        elementsOnViews.Add(elemId, new List<View> { curView });
-                    }
-                }
-            }
-
+            Dictionary<int, Dictionary<string, string>> elemsAndParams = doc.GetElementParametersByViews(views);
+            int counter = 0;
 
             using (Transaction t = new Transaction(doc))
             {
                 t.Start("Заполнение по виду");
-                foreach (var kvp in elementsOnViews)
+                foreach (KeyValuePair<int, Dictionary<string, string>> kvp in elemsAndParams)
                 {
                     Element elem = doc.GetElement(new ElementId(kvp.Key));
-                    Dictionary<string, HashSet<string>> paramNameAndValues = new Dictionary<string, HashSet<string>>();
+                    Dictionary<string, string> paramNameAndValues = kvp.Value;
 
-                    foreach (View curView in kvp.Value)
+                    foreach(var paramsAndValues in kvp.Value)
                     {
-                        foreach (string[] paramsRow in sets.WriteViewParameters)
-                        {
-                            string viewParamName = paramsRow[0];
-                            string elemParamName = paramsRow[1];
-                            Parameter viewParam = curView.LookupParameter(viewParamName);
-                            if (viewParam == null || !viewParam.HasValue)
-                                continue;
-
-                            string curViewVal = MyParameter.GetParameterValAsString(curView, viewParamName);
-                            if (paramNameAndValues.ContainsKey(elemParamName))
-                                paramNameAndValues[elemParamName].Add(curViewVal);
-                            else
-                                paramNameAndValues.Add(elemParamName, new HashSet<string> { curViewVal });
-
-                        }
-                    }
-
-                    foreach (string[] paramsRow in sets.WriteViewParameters)
-                    {
-                        string elemParamName = paramsRow[1];
-                        Parameter elemParam = elem.LookupParameter(elemParamName);
+                        string paramName = paramsAndValues.Key;
+                        string paramValue = paramsAndValues.Value;
+                        Parameter elemParam = elem.LookupParameter(paramName);
                         if (elemParam == null) continue;
                         if (elemParam.IsReadOnly) continue;
                         if (elemParam.StorageType != StorageType.String)
                         {
                             string msg = "Допускается заполнение только текстовых параметров. " +
-                                elemParamName + " не текстовый параметр";
+                                paramName + " не текстовый параметр";
                             TaskDialog.Show("Error", msg);
                             throw new Exception(msg);
                         }
 
-                        HashSet<string> paramValues = paramNameAndValues[elemParamName];
-                        string elemParamVal = string.Join(sets.WriteViewSeparator, paramValues);
-                        elemParam.Set(elemParamVal);
+                        elemParam.Set(paramValue);
+                        counter++;
                     }
-
                 }
 
                 t.Commit();
             }
 
-            sets.Save();
-
+            BalloonTip.Show("Обработано элементов: " + counter.ToString(), "Использовано видов: " + views.Count.ToString());
             return Result.Succeeded;
         }
-
-        private bool ViewIsOnSheet(View vw)
-        {
-            Parameter sheetNumberParam = vw.get_Parameter(BuiltInParameter.VIEWER_SHEET_NUMBER);
-            if (sheetNumberParam == null) return false;
-            string sheetNumber = sheetNumberParam.AsString();
-            if (sheetNumber == "---") return false;
-
-            return true;
-        }
-
     }
 }

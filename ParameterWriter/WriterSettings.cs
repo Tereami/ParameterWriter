@@ -32,11 +32,6 @@ namespace ParameterWriter
         public string currentCostructor = "<Марка>_<Комментарии>";
         public List<string> constructorHistory = new List<string>();
 
-        public List<string[]> WriteViewParameters = new List<string[]> { };
-        public bool WriteViewOnlySheets = true;
-        public bool WriteViewAll = true;
-        public string WriteViewSeparator = "$";
-
         private static string xmlPath = "";
 
         public static WriterSettings Activate()
@@ -71,12 +66,6 @@ namespace ParameterWriter
             if (s == null)
             {
                 s = new WriterSettings();
-            }
-            
-            if(s.WriteViewParameters.Count == 0)
-            {
-                s.WriteViewParameters.Add(new string[] { "Имя вида", "Марка" });
-                s.WriteViewParameters.Add(new string[] { "Номер листа", "Комментарии" });
             }
 
             return s;
