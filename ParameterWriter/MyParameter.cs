@@ -245,8 +245,15 @@ namespace ParameterWriter
             Parameter param = Elem.LookupParameter(ParamName);
             if (param == null)
             {
-                Element eltype = Elem.Document.GetElement(Elem.GetTypeId());
-                param = eltype.LookupParameter(ParamName);
+                ElementId typeId = Elem.GetTypeId();
+                if (typeId != null && typeId != ElementId.InvalidElementId)
+                {
+                    Element eltype = Elem.Document.GetElement(typeId);
+                    if (eltype != null)
+                    {
+                        param = eltype.LookupParameter(ParamName);
+                    }
+                }
             }
             return param;
         }
