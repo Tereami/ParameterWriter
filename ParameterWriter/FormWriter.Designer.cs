@@ -333,7 +333,6 @@
             this.checkBox_ShowLog.TabIndex = 7;
             this.checkBox_ShowLog.Text = "Вывести лог";
             this.checkBox_ShowLog.UseVisualStyleBackColor = true;
-            this.checkBox_ShowLog.Visible = false;
             // 
             // FormWriter
             // 

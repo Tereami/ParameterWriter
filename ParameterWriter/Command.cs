@@ -113,20 +113,27 @@ namespace ParameterWriter
                 }
             }
 
+            List<string> log = new List<string>();
 
             List<string> msgs = new List<string>();
             using (Transaction t = new Transaction(doc))
             {
                 t.Start("Заполнятор");
 
-                foreach(WriterSettings ws in sets)
+                foreach (WriterSettings ws in sets)
                 {
                     string curName = ws.targetParamName;
                     int curCount = 0;
+                    if (form.ShowLog)
+                        log.Add($"Write {curName}:");
                     foreach (Element elem in elems)
                     {
                         bool success = MyParameter.SetValue(elem, ws);
-                        if(success) curCount++;
+                        if (success)
+                            curCount++;
+
+                        if (form.ShowLog)
+                            log.Add($"For element ID {elem.Id.IntegerValue} {elem.Name}: {success} ");
                     }
                     msgs.Add(ws.targetParamName + " заполнен для " + curCount.ToString() + " эл-тов");
                 }
@@ -137,7 +144,14 @@ namespace ParameterWriter
             string title = "Обработано " + msgs.Count.ToString() + " сценариев";
             string msg = string.Join(System.Environment.NewLine, msgs);
 
-            BalloonTip.Show(title,  msg);
+            if (form.ShowLog)
+            {
+                string logString = string.Join(System.Environment.NewLine, log);
+                FormLog formLog = new FormLog(logString);
+                formLog.ShowDialog();
+            }
+
+            BalloonTip.Show(title, msg);
 
             return Result.Succeeded;
         }
