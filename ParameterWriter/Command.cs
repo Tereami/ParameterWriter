@@ -19,8 +19,6 @@ namespace ParameterWriter
             //Dictionary<string, HashSet<object>> paramsbase = new Dictionary<string, HashSet<object>>();
             //HashSet<string> parameters = new HashSet<string>();
 
-            WriterSettings sets = WriterSettings.Activate();
-
             List<ElementId> elemIds = new List<ElementId>();
             FilteredElementCollector col;
 
@@ -57,12 +55,12 @@ namespace ParameterWriter
                 if (typeId == ElementId.InvalidElementId) continue;
                 ElementType elemType = doc.GetElement(typeId) as ElementType;
                 if (elemType == null) continue;
-                foreach(Parameter p in elemType.Parameters)
+                foreach (Parameter p in elemType.Parameters)
                 {
                     allParams.Add(p);
                 }
 
-                foreach(Parameter p in allParams)
+                foreach (Parameter p in allParams)
                 {
                     string pname = p.Definition.Name;
                     string val = MyParameter.GetParameterValAsString(elem, pname);
@@ -74,47 +72,72 @@ namespace ParameterWriter
                 }
             }
 
-            
+
+            List<Element> levels = new FilteredElementCollector(doc)
+                .WhereElementIsNotElementType()
+                .OfClass(typeof(Level))
+                .ToElements()
+                .ToList();
+            if (levels.Count == 0)
+                throw new Exception("NO LEVELS IN THIS MODEL!");
+            Element level = levels[0];
+            List<string> levelParametersNames = new List<string>();
+            foreach (Parameter p in level.Parameters)
+            {
+                levelParametersNames.Add(p.Definition.Name);
+            }
+
+
+
             //открываю диалоговое окно
-            FormWriter form = new FormWriter(haveSelectedElems, valuesBase, sets);
+            FormWriter form = new FormWriter(haveSelectedElems, valuesBase, levelParametersNames);
             if (form.ShowDialog() != System.Windows.Forms.DialogResult.OK) return Result.Cancelled;
-            sets = form.sets;
+            List<WriterSettings> sets = form.allSettings;
+            if (sets.Count == 0) return Result.Failed;
             //string sourceParamName = form.otherParamName;
 
 
-            int count = 0;
+            List<Element> elems = new List<Element>();
+            if (form.writerMode == WriterMode.AllInProject)
+            {
+                elems = new FilteredElementCollector(doc)
+                        .WhereElementIsNotElementType()
+                        .ToElements()
+                        .ToList();
+            }
+            else
+            {
+                foreach (ElementId id in elemIds)
+                {
+                    elems.Add(doc.GetElement(id));
+                }
+            }
 
+
+            List<string> msgs = new List<string>();
             using (Transaction t = new Transaction(doc))
             {
                 t.Start("Заполнятор");
 
-                if(form.writerMode == WriterMode.AllInProject)
+                foreach(WriterSettings ws in sets)
                 {
-                    FilteredElementCollector col2 = new FilteredElementCollector(doc)
-                        .WhereElementIsNotElementType();
-
-                    foreach(Element elem in col2)
+                    string curName = ws.targetParamName;
+                    int curCount = 0;
+                    foreach (Element elem in elems)
                     {
-                        MyParameter.SetValue(elem, sets);
-                        count++;
+                        bool success = MyParameter.SetValue(elem, ws);
+                        if(success) curCount++;
                     }
-                        
-                }
-                else
-                {
-                    foreach (ElementId id in elemIds)
-                    {
-                        Element elem = doc.GetElement(id);
-                        MyParameter.SetValue(elem, sets);
-                        count++;
-                    }
+                    msgs.Add(ws.targetParamName + " заполнен для " + curCount.ToString() + " эл-тов");
                 }
 
                 t.Commit();
             }
 
-            sets.Save();
-            BalloonTip.Show(sets.targetParamName + " заполнен!", "Обработано элементов: " + count.ToString());
+            string title = "Обработано " + msgs.Count.ToString() + " сценариев";
+            string msg = string.Join(System.Environment.NewLine, msgs);
+
+            BalloonTip.Show(title,  msg);
 
             return Result.Succeeded;
         }

@@ -167,7 +167,7 @@ namespace ParameterWriter
                 case StorageType.Integer:
                     return intValue.ToString();
                 case StorageType.Double:
-                    return doubleValue.ToString(); ;
+                    return doubleValue.ToString();
                 case StorageType.String:
                     return stringValue;
                 case StorageType.ElementId:
@@ -180,33 +180,38 @@ namespace ParameterWriter
         /// <summary>
         /// Запись в элемент значения параметра
         /// </summary>
-        public static void SetValue(Element elem, WriterSettings sets)
+        public static bool SetValue(Element elem, WriterSettings sets)
         {
+            bool result = false;
             Parameter targetParam = MyParameter.SuperGetParameter(elem, sets.targetParamName);
-            string source = sets.sourceParameterName;
-            if (targetParam == null) return;
+            if (targetParam == null) return false;
             if (targetParam.IsReadOnly)
             {
-                string errmsg = "Параметр " + sets.targetParamName + " недоступен для записи";
-                System.Windows.Forms.MessageBox.Show(errmsg);
-                throw new Exception(errmsg);
+                //string errmsg = "Параметр " + sets.targetParamName + " недоступен для записи";
+                //System.Windows.Forms.MessageBox.Show(errmsg);
+                //throw new Exception(errmsg);
+                return false;
             }
             switch (sets.sourceMode)
             {
                 case SourceMode.FixValue:
-                    SetFixValue(targetParam, source);
+                    result = SetFixValue(targetParam, sets.ConstValue);
                     break;
                 case SourceMode.OtherParameter:
-                    Parameter sourceParam = MyParameter.SuperGetParameter(elem, source);
-                    SetValueByParam(sourceParam, targetParam);
+                    Parameter sourceParam = MyParameter.SuperGetParameter(elem, sets.sourceParameterName);
+                    result = SetValueByParam(sourceParam, targetParam);
                     break;
                 case SourceMode.Constructor:
-                    SetValueByConstructor(source, elem, targetParam);
+                    result = SetValueByConstructor(sets.constructor, elem, targetParam);
+                    break;
+                case SourceMode.Level:
+                    result = SetValueFromLevel(targetParam, elem, sets.levelParamName);
                     break;
             }
+            return result;
         }
 
-        public static void SetValueByConstructor(string constructor, Element sourceElem, Parameter targetParam)
+        public static bool SetValueByConstructor(string constructor, Element sourceElem, Parameter targetParam)
         {
 #if R2022 || R2023
             ForgeTypeId ft = targetParam.Definition.GetDataType();
@@ -219,10 +224,9 @@ namespace ParameterWriter
                 Autodesk.Revit.UI.TaskDialog.Show("Ошибка", msg);
                 throw new Exception(msg);
             }
-            string result = "";
 
             string prefix = constructor.Split('<').First();
-            result = result + prefix;
+            string result = prefix;
 
             string[] sa = constructor.Split('<');
             for (int i = 0; i < sa.Length; i++)
@@ -238,6 +242,7 @@ namespace ParameterWriter
                 result = result + val + separator;
             }
             targetParam.Set(result);
+            return true;
         }
 
         public static Parameter SuperGetParameter(Element Elem, string ParamName)
@@ -258,11 +263,20 @@ namespace ParameterWriter
             return param;
         }
 
+
+
+
         public static string GetParameterValAsString(Element e, string paramName)
         {
             Parameter param = SuperGetParameter(e, paramName);
             if (param == null) return string.Empty;
 
+            string val = GetParameterValAsString(param);
+            return val;
+        }
+
+        public static string GetParameterValAsString(Parameter param)
+        {
             string val = string.Empty;
 
             switch (param.StorageType)
@@ -294,37 +308,63 @@ namespace ParameterWriter
                 return val;
         }
 
-        public static void SetValueByParam(Parameter sourceParam, Parameter targetParam)
+
+
+            public static bool SetValueByParam(Parameter sourceParam, Parameter targetParam)
         {
-            if (sourceParam == null) return;
-            if (!sourceParam.HasValue) return;
+            bool result = false;
+            if (sourceParam == null) return false;
+            if (!sourceParam.HasValue) return false;
 
-            if (sourceParam.StorageType != targetParam.StorageType)
-                throw new Exception("StorageType of parameters are different!");
-
-            switch (targetParam.StorageType)
+            if (sourceParam.StorageType == targetParam.StorageType)
             {
-                case StorageType.None:
-                    break;
-                case StorageType.Integer:
-                    targetParam.Set(sourceParam.AsInteger());
-                    break;
-                case StorageType.Double:
-                    targetParam.Set(sourceParam.AsDouble());
-                    break;
-                case StorageType.String:
-                    targetParam.Set(sourceParam.AsString());
-                    break;
-                case StorageType.ElementId:
-                    targetParam.Set(sourceParam.AsElementId());
-                    break;
-                default:
-                    break;
+                switch (targetParam.StorageType)
+                {
+                    case StorageType.None:
+                        break;
+                    case StorageType.Integer:
+                        targetParam.Set(sourceParam.AsInteger());
+                        break;
+                    case StorageType.Double:
+                        targetParam.Set(sourceParam.AsDouble());
+                        break;
+                    case StorageType.String:
+                        targetParam.Set(sourceParam.AsString());
+                        break;
+                    case StorageType.ElementId:
+                        targetParam.Set(sourceParam.AsElementId());
+                        break;
+                    default:
+                        break;
+                }
             }
+            else if(targetParam.StorageType == StorageType.String)
+            {
+                string val = GetParameterValAsString(sourceParam);
+                targetParam.Set(val);
+            }
+            else if(targetParam.StorageType == StorageType.Double && sourceParam.StorageType == StorageType.Integer)
+            {
+                int val = sourceParam.AsInteger();
+                double dval = (double)val;
+                targetParam.Set(dval);
+            }
+            else
+            {
+                string enumSourceParamTypeName = Enum.GetName(typeof(StorageType), sourceParam.StorageType);
+                string enumTargetParamTypeName = Enum.GetName(typeof(StorageType), targetParam.StorageType);
+                string msg = $"Не поддерживается преобразование {enumSourceParamTypeName} в {enumTargetParamTypeName}";
+                System.Windows.Forms.MessageBox.Show(msg);
+                throw new Exception(msg);
+
+            }
+            result = true;
+            return result;
         }
 
-        public static void SetFixValue(Parameter param, string value)
+        public static bool SetFixValue(Parameter param, string value)
         {
+            bool result = false;
             switch (param.StorageType)
             {
                 case StorageType.None:
@@ -355,21 +395,26 @@ namespace ParameterWriter
                 default:
                     break;
             }
+            result = true;
+            return result;
         }
 
+        public static bool SetValueFromLevel(Parameter targetParam, Element elem, string sourceParamName)
+        {
+            bool result = false;
+            Level lev = GetBaseLevel(elem);
+            if (lev == null) return false;
+            Parameter levelParam = SuperGetParameter(lev, sourceParamName);
+            if (levelParam == null || !levelParam.HasValue) return false; ;
 
-        /* private static bool ParamIsLength(Parameter param)
-         {
-             bool isMillimeters = false;
- #if R2022 || R2023
-             //ForgeTypeId forgeType = param.GetUnitTypeId();
-             //string unittype = forgeType.TypeId;
-             ForgeTypeId forgeType = param.Definition.GetDataType();
-             isMillimeters = forgeType == SpecTypeId.Length;
- #else
-             isMillimeters = param.Definition.UnitType == UnitType.UT_Length;
- #endif
-             return isMillimeters;
-         }*/
+            result = SetValueByParam(levelParam, targetParam);
+            return result;
+        }
+
+        private static Level GetBaseLevel(Element elem)
+        {
+            Level lev = elem.Document.GetElement(elem.LevelId) as Level;
+            return lev;
+        }
     }
 }

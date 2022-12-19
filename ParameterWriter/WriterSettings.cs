@@ -27,34 +27,62 @@ namespace ParameterWriter
     public class WriterSettings
     {
         public string targetParamName = "Марка";
+        public string ConstValue = "СТм-1";
         public string sourceParameterName = "Комментарии";
+        public string levelParamName = "Имя";
         public SourceMode sourceMode = SourceMode.FixValue;
-        public string currentCostructor = "<Марка>_<Комментарии>";
-        public List<string> constructorHistory = new List<string>();
+        public string constructor = "<Марка>_<Комментарии>";
+        //public List<string> constructorHistory = new List<string>();
 
-        private static string xmlPath = "";
+        //[System.Xml.Serialization.XmlIgnore]
+        //public static string xmlPath = "";
 
-        public static WriterSettings Activate()
+        public override string ToString()
         {
-            string appdataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            string rbspath = Path.Combine(appdataPath, "bim-starter");
-            if (!Directory.Exists(rbspath))
+            string name = targetParamName + "_";
+
+            switch (sourceMode)
             {
-                Directory.CreateDirectory(rbspath);
+                case SourceMode.FixValue:
+                    name += ConstValue;
+                    break;
+                case SourceMode.OtherParameter:
+                    name += "param_" + sourceParameterName;
+                    break;
+                case SourceMode.Constructor:
+                    name += constructor;
+                    break;
+                case SourceMode.Level:
+                    name += "level_" + levelParamName;
+                    break;
+                default:
+                    break;
             }
-            string solutionName = System.Reflection.Assembly.GetExecutingAssembly().GetName().Name;
-            string solutionFolder = Path.Combine(rbspath, solutionName);
-            if (!Directory.Exists(solutionFolder))
-            {
-                Directory.CreateDirectory(solutionFolder);
-            }
-            xmlPath = Path.Combine(solutionFolder, "settings.xml");
+            name = string.Join("_", name.Split(Path.GetInvalidFileNameChars()));
+            return name;
+        }
+
+        public static WriterSettings Load(string xmlFilePath)
+        {
+            //string appdataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            //string rbspath = Path.Combine(appdataPath, "bim-starter");
+            //if (!Directory.Exists(rbspath))
+            //{
+            //    Directory.CreateDirectory(rbspath);
+            //}
+            //string solutionName = System.Reflection.Assembly.GetExecutingAssembly().GetName().Name;
+            //string solutionFolder = Path.Combine(rbspath, solutionName);
+            //if (!Directory.Exists(solutionFolder))
+            //{
+            //    Directory.CreateDirectory(solutionFolder);
+            //}
+            //xmlPath = Path.Combine(solutionFolder, "settings.xml");
             WriterSettings s = null;
 
-            if (File.Exists(xmlPath))
+            if (File.Exists(xmlFilePath))
             {
                 XmlSerializer serializer = new XmlSerializer(typeof(WriterSettings));
-                using (StreamReader reader = new StreamReader(xmlPath))
+                using (StreamReader reader = new StreamReader(xmlFilePath))
                 {
                     try
                     {
@@ -71,13 +99,13 @@ namespace ParameterWriter
             return s;
         }
 
-        public void Save()
+        public static void Save(WriterSettings sets, string xmlFilePath)
         {
-            if (File.Exists(xmlPath)) File.Delete(xmlPath);
+            if (File.Exists(xmlFilePath)) File.Delete(xmlFilePath);
             XmlSerializer serializer = new XmlSerializer(typeof(WriterSettings));
-            using (FileStream writer = new FileStream(xmlPath, FileMode.OpenOrCreate))
+            using (FileStream writer = new FileStream(xmlFilePath, FileMode.OpenOrCreate))
             {
-                serializer.Serialize(writer, this);
+                serializer.Serialize(writer, sets);
             }
         }
     }
