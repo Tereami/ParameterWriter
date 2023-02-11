@@ -40,7 +40,9 @@ namespace ParameterWriter
             }
 
             Dictionary<int, Dictionary<string, string>> elemsAndParams = doc.GetElementParametersByViews(views);
-            int counter = 0;
+
+            Dictionary<string, int> paramsCount = new Dictionary<string, int>();
+            int elementsCount = 0;
 
             using (Transaction t = new Transaction(doc))
             {
@@ -57,23 +59,55 @@ namespace ParameterWriter
                         Parameter elemParam = elem.LookupParameter(paramName);
                         if (elemParam == null) continue;
                         if (elemParam.IsReadOnly) continue;
-                        if (elemParam.StorageType != StorageType.String)
+                        bool success = false;
+                        switch (elemParam.StorageType)
                         {
-                            string msg = "Допускается заполнение только текстовых параметров. " +
-                                paramName + " не текстовый параметр";
-                            TaskDialog.Show("Error", msg);
-                            throw new Exception(msg);
+                            case StorageType.Integer:
+                                int intValue = 0;
+                                bool intCheck = int.TryParse(paramValue, out intValue);
+                                if (!intCheck)
+                                    throw new Exception($"Incorrect Int value {paramValue} for parameter {paramName}");
+                                elemParam.Set(intValue);
+                                success = true;
+                                break;
+                            case StorageType.Double:
+                                double doubleValue = 0;
+                                bool doubleCheck = double.TryParse(paramValue, out doubleValue);
+                                if(!doubleCheck)
+                                    throw new Exception($"Incorrect Double value {paramValue} for parameter {paramName}");
+#if R2017 || R2018 || R2019 || R2020
+                                double internalDouble = UnitUtils.ConvertToInternalUnits(doubleValue, elemParam.DisplayUnitType);
+#else
+                                double internalDouble = UnitUtils.ConvertToInternalUnits(doubleValue, elemParam.GetUnitTypeId());
+#endif
+                                elemParam.Set(internalDouble);
+                                success = true;
+                                break;
+                            case StorageType.String:
+                                elemParam.Set(paramValue);
+                                success = true;
+                                break;
+                            default:
+                                throw new Exception($"Unsoppurted parameter {paramName}");
                         }
-
-                        elemParam.Set(paramValue);
-                        counter++;
+                        if(success)
+                        {
+                            if (paramsCount.ContainsKey(paramName))
+                                paramsCount[paramName]++;
+                            else
+                                paramsCount.Add(paramName, 1);
+                        }
                     }
+                    elementsCount++;
                 }
 
                 t.Commit();
             }
 
-            BalloonTip.Show("Обработано элементов: " + counter.ToString(), "Использовано видов: " + views.Count.ToString());
+            string paramsMsg = "Заполнены параметры: " + System.Environment.NewLine +
+                string.Join(System.Environment.NewLine, paramsCount.Select(i => $"{i.Key}: {i.Value}шт"));
+
+            BalloonTip.Show("Обработано элементов: " + elementsCount.ToString(), paramsMsg);
             return Result.Succeeded;
         }
     }

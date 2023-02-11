@@ -41,14 +41,14 @@ namespace ParameterWriter
             this.richTextBox1.Location = new System.Drawing.Point(12, 12);
             this.richTextBox1.Name = "richTextBox1";
             this.richTextBox1.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.ForcedVertical;
-            this.richTextBox1.Size = new System.Drawing.Size(314, 302);
+            this.richTextBox1.Size = new System.Drawing.Size(492, 335);
             this.richTextBox1.TabIndex = 0;
             this.richTextBox1.Text = "";
             // 
             // buttonOk
             // 
             this.buttonOk.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.buttonOk.Location = new System.Drawing.Point(251, 320);
+            this.buttonOk.Location = new System.Drawing.Point(429, 353);
             this.buttonOk.Name = "buttonOk";
             this.buttonOk.Size = new System.Drawing.Size(75, 23);
             this.buttonOk.TabIndex = 1;
@@ -61,11 +61,12 @@ namespace ParameterWriter
             this.AcceptButton = this.buttonOk;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(338, 355);
+            this.ClientSize = new System.Drawing.Size(516, 388);
             this.Controls.Add(this.buttonOk);
             this.Controls.Add(this.richTextBox1);
             this.MinimumSize = new System.Drawing.Size(354, 394);
             this.Name = "FormLog";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Отчет";
             this.ResumeLayout(false);
 
