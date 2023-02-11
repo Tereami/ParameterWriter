@@ -16,7 +16,7 @@ namespace ParameterWriter
             assemblyPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
             string tabName = "BIM-STARTER TEST";
             try { application.CreateRibbonTab(tabName); } catch { }
-            string panelName = "Управление";
+            string panelName = "Manage";
             RibbonPanel panel = null;
             List<RibbonPanel> tryPanels = application.GetRibbonPanels(tabName).Where(i => i.Name == panelName).ToList();
             if (tryPanels.Count == 0)
@@ -30,14 +30,14 @@ namespace ParameterWriter
 
             PushButton btn = panel.AddItem(new PushButtonData(
                             "ParameterWriter",
-                            "Заполнятор",
+                            "Writer",
                             assemblyPath,
                             "ParameterWriter.Command")
                             ) as PushButton;
 
             PushButton btnView = panel.AddItem(new PushButtonData(
                             "WriteView",
-                            "На виде",
+                            "By view",
                             assemblyPath,
                             "ParameterWriter.CommandWriteView")
                             ) as PushButton;

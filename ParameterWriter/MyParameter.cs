@@ -220,9 +220,8 @@ namespace ParameterWriter
             if (targetParam.Definition.ParameterType != ParameterType.Text)
 #endif
             {
-                string msg = "Заполнение через Конструктор доступно только для текстовых параметров";
-                Autodesk.Revit.UI.TaskDialog.Show("Ошибка", msg);
-                throw new Exception(msg);
+                Autodesk.Revit.UI.TaskDialog.Show(MyStrings.Error, MyStrings.ConstructorOnlyText);
+                throw new Exception(MyStrings.ConstructorOnlyText);
             }
 
             string prefix = constructor.Split('<').First();
@@ -288,12 +287,12 @@ namespace ParameterWriter
                     break;
                 case StorageType.Double:
                     double doubval = param.AsDouble();
-#if R2022 || R2023
-                    doubval = UnitUtils.ConvertFromInternalUnits(param.AsDouble(), param.GetUnitTypeId());
-#else
+#if R2017 || R2018 || R2019 || R2020
                     doubval = UnitUtils.ConvertFromInternalUnits(param.AsDouble(), param.DisplayUnitType);
+#else
+                    doubval = UnitUtils.ConvertFromInternalUnits(param.AsDouble(), param.GetUnitTypeId());
 #endif
-                    val = doubval.ToString("F0");
+                    val = doubval.ToString("F2");
                     break;
                 case StorageType.String:
                     val = param.AsString();
@@ -353,7 +352,7 @@ namespace ParameterWriter
             {
                 string enumSourceParamTypeName = Enum.GetName(typeof(StorageType), sourceParam.StorageType);
                 string enumTargetParamTypeName = Enum.GetName(typeof(StorageType), targetParam.StorageType);
-                string msg = $"Не поддерживается преобразование {enumSourceParamTypeName} в {enumTargetParamTypeName}";
+                string msg = $"{MyStrings.UnsopportedConvert} {enumSourceParamTypeName} - {enumTargetParamTypeName}";
                 System.Windows.Forms.MessageBox.Show(msg);
                 throw new Exception(msg);
 
@@ -374,12 +373,11 @@ namespace ParameterWriter
                     break;
                 case StorageType.Double:
                     double doubleValByUser = double.Parse(value);
-
-#if R2022 || R2023
-                    ForgeTypeId units = param.GetUnitTypeId();
+#if R2017 || R2018 || R2019 || R2020
+                    DisplayUnitType units = param.DisplayUnitType;
                     double doubleVal = UnitUtils.ConvertToInternalUnits(doubleValByUser, units);
 #else
-                    DisplayUnitType units = param.DisplayUnitType;
+                    ForgeTypeId units = param.GetUnitTypeId();
                     double doubleVal = UnitUtils.ConvertToInternalUnits(doubleValByUser, units);
 #endif
                     param.Set(doubleVal);

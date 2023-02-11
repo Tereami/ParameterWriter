@@ -118,7 +118,7 @@ namespace ParameterWriter
             List<string> msgs = new List<string>();
             using (Transaction t = new Transaction(doc))
             {
-                t.Start("Заполнятор");
+                t.Start("Writer");
 
                 foreach (WriterSettings ws in sets)
                 {
@@ -135,13 +135,13 @@ namespace ParameterWriter
                         if (form.ShowLog)
                             log.Add($"For element ID {elem.Id.IntegerValue} {elem.Name}: {success} ");
                     }
-                    msgs.Add(ws.targetParamName + " заполнен для " + curCount.ToString() + " эл-тов");
+                    msgs.Add(ws.targetParamName + MyStrings.WriteFor + curCount.ToString() + MyStrings.ForElements);
                 }
 
                 t.Commit();
             }
 
-            string title = "Обработано " + msgs.Count.ToString() + " сценариев";
+            string title = MyStrings.ScenariosProcessed + msgs.Count.ToString();
             string msg = string.Join(System.Environment.NewLine, msgs);
 
             if (form.ShowLog)

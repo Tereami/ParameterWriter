@@ -33,9 +33,7 @@ namespace ParameterWriter
             List<View> views = doc.GetFiller3dViews();
             if (views.Count == 0)
             {
-                string msg = "Не найдены подходящие виды. "
-                    + "Имя вида должно быть: Filler#Параметр=Значение.";
-                TaskDialog.Show("Error", msg);
+                TaskDialog.Show("Error", MyStrings.NoViewsFound);
                 return Result.Failed;
             }
 
@@ -46,7 +44,7 @@ namespace ParameterWriter
 
             using (Transaction t = new Transaction(doc))
             {
-                t.Start("Заполнение по виду");
+                t.Start("Write by view");
                 foreach (KeyValuePair<int, Dictionary<string, string>> kvp in elemsAndParams)
                 {
                     Element elem = doc.GetElement(new ElementId(kvp.Key));
@@ -104,10 +102,10 @@ namespace ParameterWriter
                 t.Commit();
             }
 
-            string paramsMsg = "Заполнены параметры: " + System.Environment.NewLine +
-                string.Join(System.Environment.NewLine, paramsCount.Select(i => $"{i.Key}: {i.Value}шт"));
+            string paramsMsg = MyStrings.ParametersWritten + System.Environment.NewLine +
+                string.Join(System.Environment.NewLine, paramsCount.Select(i => $"{i.Key}: {i.Value}{MyStrings.Pieces}"));
 
-            BalloonTip.Show("Обработано элементов: " + elementsCount.ToString(), paramsMsg);
+            BalloonTip.Show(MyStrings.ElementsProcessed + elementsCount.ToString(), paramsMsg);
             return Result.Succeeded;
         }
     }

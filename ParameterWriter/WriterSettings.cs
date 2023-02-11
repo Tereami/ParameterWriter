@@ -26,16 +26,12 @@ namespace ParameterWriter
     [Serializable]
     public class WriterSettings
     {
-        public string targetParamName = "Марка";
-        public string ConstValue = "СТм-1";
-        public string sourceParameterName = "Комментарии";
-        public string levelParamName = "Имя";
+        public string targetParamName = MyStrings.ParamNameMark;
+        public string ConstValue = MyStrings.ParamConstValue;
+        public string sourceParameterName = MyStrings.ParamSourceName;
+        public string levelParamName = MyStrings.ParamLevelName;
         public SourceMode sourceMode = SourceMode.FixValue;
-        public string constructor = "<Марка>_<Комментарии>";
-        //public List<string> constructorHistory = new List<string>();
-
-        //[System.Xml.Serialization.XmlIgnore]
-        //public static string xmlPath = "";
+        public string constructor = MyStrings.ParamConstructor;
 
         public override string ToString()
         {
@@ -64,19 +60,6 @@ namespace ParameterWriter
 
         public static WriterSettings Load(string xmlFilePath)
         {
-            //string appdataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            //string rbspath = Path.Combine(appdataPath, "bim-starter");
-            //if (!Directory.Exists(rbspath))
-            //{
-            //    Directory.CreateDirectory(rbspath);
-            //}
-            //string solutionName = System.Reflection.Assembly.GetExecutingAssembly().GetName().Name;
-            //string solutionFolder = Path.Combine(rbspath, solutionName);
-            //if (!Directory.Exists(solutionFolder))
-            //{
-            //    Directory.CreateDirectory(solutionFolder);
-            //}
-            //xmlPath = Path.Combine(solutionFolder, "settings.xml");
             WriterSettings s = null;
 
             if (File.Exists(xmlFilePath))
