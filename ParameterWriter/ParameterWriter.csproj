@@ -231,6 +231,9 @@
     <EmbeddedResource Include="FormWriter.resx">
       <DependentUpon>FormWriter.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="FormWriter.ru-RU.resx">
+      <DependentUpon>FormWriter.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <None Include="ParameterWriter.addin" />

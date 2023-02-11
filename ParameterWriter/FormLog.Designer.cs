@@ -67,7 +67,7 @@ namespace ParameterWriter
             this.MinimumSize = new System.Drawing.Size(354, 394);
             this.Name = "FormLog";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Отчет";
+            this.Text = "Log";
             this.ResumeLayout(false);
 
         }
