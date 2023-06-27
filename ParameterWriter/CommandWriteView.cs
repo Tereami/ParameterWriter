@@ -37,7 +37,7 @@ namespace ParameterWriter
                 return Result.Failed;
             }
 
-            Dictionary<int, Dictionary<string, string>> elemsAndParams = doc.GetElementParametersByViews(views);
+            Dictionary<long, Dictionary<string, string>> elemsAndParams = doc.GetElementParametersByViews(views);
 
             Dictionary<string, int> paramsCount = new Dictionary<string, int>();
             int elementsCount = 0;
@@ -45,12 +45,16 @@ namespace ParameterWriter
             using (Transaction t = new Transaction(doc))
             {
                 t.Start("Write by view");
-                foreach (KeyValuePair<int, Dictionary<string, string>> kvp in elemsAndParams)
+                foreach (var kvp in elemsAndParams)
                 {
+#if R2017 || R2018 || R2019 || R2020 || R2021 || R2022 || R2023
+                    Element elem = doc.GetElement(new ElementId((int)kvp.Key)); //в версиях до 2024 можно приводить long к int
+#else
                     Element elem = doc.GetElement(new ElementId(kvp.Key));
+#endif
                     Dictionary<string, string> paramNameAndValues = kvp.Value;
 
-                    foreach(var paramsAndValues in kvp.Value)
+                    foreach (var paramsAndValues in kvp.Value)
                     {
                         string paramName = paramsAndValues.Key;
                         string paramValue = paramsAndValues.Value;
@@ -71,7 +75,7 @@ namespace ParameterWriter
                             case StorageType.Double:
                                 double doubleValue = 0;
                                 bool doubleCheck = double.TryParse(paramValue, out doubleValue);
-                                if(!doubleCheck)
+                                if (!doubleCheck)
                                     throw new Exception($"Incorrect Double value {paramValue} for parameter {paramName}");
 #if R2017 || R2018 || R2019 || R2020
                                 double internalDouble = UnitUtils.ConvertToInternalUnits(doubleValue, elemParam.DisplayUnitType);
@@ -88,7 +92,7 @@ namespace ParameterWriter
                             default:
                                 throw new Exception($"Unsoppurted parameter {paramName}");
                         }
-                        if(success)
+                        if (success)
                         {
                             if (paramsCount.ContainsKey(paramName))
                                 paramsCount[paramName]++;

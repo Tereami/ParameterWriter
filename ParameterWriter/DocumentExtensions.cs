@@ -59,10 +59,10 @@ namespace ParameterWriter
             return elems;   
         }
 
-        public static Dictionary<int, Dictionary<string, string>> GetElementParametersByViews(this Document doc, List<View> views)
+        public static Dictionary<long, Dictionary<string, string>> GetElementParametersByViews(this Document doc, List<View> views)
         {
-            Dictionary<int, Dictionary<string, HashSet<string>>> elemIdsAndParamValues =
-                new Dictionary<int, Dictionary<string, HashSet<string>>>();
+            Dictionary<long, Dictionary<string, HashSet<string>>> elemIdsAndParamValues =
+                new Dictionary<long, Dictionary<string, HashSet<string>>>();
 
             foreach (View curView in views)
             {
@@ -76,7 +76,7 @@ namespace ParameterWriter
 
                 foreach (Element elem in viewCol)
                 {
-                    int elemId = elem.Id.IntegerValue;
+                    long elemId = elem.GetElementId();
                     if (elemIdsAndParamValues.ContainsKey(elemId))
                     {
                         if (elemIdsAndParamValues[elemId].ContainsKey(paramName))
@@ -97,8 +97,8 @@ namespace ParameterWriter
                 }
             }
 
-            Dictionary<int, Dictionary<string, string>> elemsAndJoinedValues = new Dictionary<int, Dictionary<string, string>>();
-            foreach (KeyValuePair<int, Dictionary<string, HashSet<string>>> kvp in elemIdsAndParamValues)
+            Dictionary<long, Dictionary<string, string>> elemsAndJoinedValues = new Dictionary<long, Dictionary<string, string>>();
+            foreach (var kvp in elemIdsAndParamValues)
             {
                 Dictionary<string, string> curElementParams = new Dictionary<string, string>();
                 foreach (KeyValuePair<string, HashSet<string>> paramNamesAndValues in kvp.Value)

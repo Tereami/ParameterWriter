@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Autodesk.Revit.DB;
+using Microsoft.Win32;
 
 namespace ParameterWriter
 {
@@ -34,7 +35,11 @@ namespace ParameterWriter
                 case StorageType.String:
                     return this.AsString() == other.AsString();
                 case StorageType.ElementId:
+#if R2017 || R2018 || R2019 || R2020 || R2021 || R2022 || R2023
                     return this.AsElementId().IntegerValue == other.AsElementId().IntegerValue;
+#else
+                    return this.AsElementId().Value == other.AsElementId().Value;
+#endif
                 default:
                     return false;
             }
@@ -171,7 +176,11 @@ namespace ParameterWriter
                 case StorageType.String:
                     return stringValue;
                 case StorageType.ElementId:
+#if R2017 || R2018 || R2019 || R2020 || R2021 || R2022 || R2023
                     return elemIdValue.IntegerValue.ToString();
+#else
+                    return elemIdValue.Value.ToString();
+#endif
                 default:
                     return "";
             }
@@ -213,11 +222,12 @@ namespace ParameterWriter
 
         public static bool SetValueByConstructor(string constructor, Element sourceElem, Parameter targetParam)
         {
-#if R2022 || R2023
+#if R2017 || R2018 || R2019 || R2020 || R2021
+            if (targetParam.Definition.ParameterType != ParameterType.Text)
+#else
             ForgeTypeId ft = targetParam.Definition.GetDataType();
             if (ft != SpecTypeId.String.Text)
-#else
-            if (targetParam.Definition.ParameterType != ParameterType.Text)
+
 #endif
             {
                 Autodesk.Revit.UI.TaskDialog.Show(MyStrings.Error, MyStrings.ConstructorOnlyText);
@@ -298,7 +308,11 @@ namespace ParameterWriter
                     val = param.AsString();
                     break;
                 case StorageType.ElementId:
+#if R2017 || R2018 || R2019 || R2020 || R2021 || R2022 || R2023
                     val = param.AsElementId().IntegerValue.ToString();
+#else
+                    val = param.AsElementId().Value.ToString();
+#endif
                     break;
             }
             if (string.IsNullOrEmpty(val))
@@ -309,7 +323,7 @@ namespace ParameterWriter
 
 
 
-            public static bool SetValueByParam(Parameter sourceParam, Parameter targetParam)
+        public static bool SetValueByParam(Parameter sourceParam, Parameter targetParam)
         {
             bool result = false;
             if (sourceParam == null) return false;
@@ -337,12 +351,12 @@ namespace ParameterWriter
                         break;
                 }
             }
-            else if(targetParam.StorageType == StorageType.String)
+            else if (targetParam.StorageType == StorageType.String)
             {
                 string val = GetParameterValAsString(sourceParam);
                 targetParam.Set(val);
             }
-            else if(targetParam.StorageType == StorageType.Double && sourceParam.StorageType == StorageType.Integer)
+            else if (targetParam.StorageType == StorageType.Double && sourceParam.StorageType == StorageType.Integer)
             {
                 int val = sourceParam.AsInteger();
                 double dval = (double)val;
@@ -386,8 +400,13 @@ namespace ParameterWriter
                     param.Set(value);
                     break;
                 case StorageType.ElementId:
+#if R2017 || R2018 || R2019 || R2020 || R2021 || R2022 || R2023
                     int intval = int.Parse(value);
                     ElementId newId = new ElementId(intval);
+#else
+                    long longval = int.Parse(value);
+                    ElementId newId = new ElementId(longval);
+#endif
                     param.Set(newId);
                     break;
                 default:

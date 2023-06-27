@@ -133,7 +133,7 @@ namespace ParameterWriter
                             curCount++;
 
                         if (form.ShowLog)
-                            log.Add($"For element ID {elem.Id.IntegerValue} {elem.Name}: {success} ");
+                            log.Add($"For element ID {elem.GetElementId()} {elem.Name}: {success} ");
                     }
                     msgs.Add(ws.targetParamName + MyStrings.WriteFor + curCount.ToString() + MyStrings.ForElements);
                 }
