@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -430,7 +431,56 @@ namespace ParameterWriter
 
         private static Level GetBaseLevel(Element elem)
         {
-            Level lev = elem.Document.GetElement(elem.LevelId) as Level;
+            ElementId baseLevelId = elem.LevelId;
+            if(baseLevelId != null)
+            {
+                Element lev = elem.Document.GetElement(baseLevelId);
+                if (lev != null && lev is Level)
+                {
+                    return lev as Level;
+                }
+            }
+
+            List<BuiltInParameter> baseLevelParams = new List<BuiltInParameter> {
+                BuiltInParameter.LEVEL_PARAM,
+                BuiltInParameter.FAMILY_LEVEL_PARAM,
+                BuiltInParameter.FAMILY_BASE_LEVEL_PARAM,
+                BuiltInParameter.SCHEDULE_BASE_LEVEL_PARAM,
+                BuiltInParameter.INSTANCE_REFERENCE_LEVEL_PARAM,
+                BuiltInParameter.SCHEDULE_LEVEL_PARAM,
+                BuiltInParameter.WALL_BASE_CONSTRAINT
+            };
+
+            Level baseLevel = GetLevelUsingParameters(elem, baseLevelParams);
+
+            if (baseLevel == null)
+                Debug.WriteLine($"Failed to find base level for element id {elem.Id}");
+            return baseLevel;
+        }
+
+        private static Level GetLevelUsingParameters(Element elem, List<BuiltInParameter> builtInParameters)
+        {
+            Document doc = elem.Document;
+            Level lev = null;
+            foreach (BuiltInParameter bip in builtInParameters)
+            {
+                Parameter levelParam = elem.get_Parameter(bip);
+                if (levelParam != null && levelParam.HasValue)
+                {
+                    ElementId levId = levelParam.AsElementId();
+                    if (levId != ElementId.InvalidElementId)
+                    {
+                        lev = doc.GetElement(levId) as Level;
+                        if (lev != null)
+                        {
+                            Debug.WriteLine("Level is found as " + Enum.GetName(typeof(BuiltInParameter), bip)
+                                + " level id " + lev.Id.IntegerValue);
+                            return lev;
+                        }
+                    }
+                }
+            }
+            Debug.WriteLine("Failed to find level");
             return lev;
         }
     }
