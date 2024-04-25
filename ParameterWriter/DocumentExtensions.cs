@@ -76,7 +76,7 @@ namespace ParameterWriter
 
                 foreach (Element elem in viewCol)
                 {
-                    long elemId = elem.GetElementId();
+                    long elemId = elem.Id.GetElementId();
                     if (elemIdsAndParamValues.ContainsKey(elemId))
                     {
                         if (elemIdsAndParamValues[elemId].ContainsKey(paramName))

@@ -37,7 +37,7 @@ namespace ParameterWriter
                     return this.AsString() == other.AsString();
                 case StorageType.ElementId:
 #if R2017 || R2018 || R2019 || R2020 || R2021 || R2022 || R2023
-                    return this.AsElementId().IntegerValue == other.AsElementId().IntegerValue;
+                    return this.AsElementId().GetElementId() == other.AsElementId().GetElementId();
 #else
                     return this.AsElementId().Value == other.AsElementId().Value;
 #endif
@@ -178,7 +178,7 @@ namespace ParameterWriter
                     return stringValue;
                 case StorageType.ElementId:
 #if R2017 || R2018 || R2019 || R2020 || R2021 || R2022 || R2023
-                    return elemIdValue.IntegerValue.ToString();
+                    return elemIdValue.GetElementId().ToString();
 #else
                     return elemIdValue.Value.ToString();
 #endif
@@ -310,7 +310,7 @@ namespace ParameterWriter
                     break;
                 case StorageType.ElementId:
 #if R2017 || R2018 || R2019 || R2020 || R2021 || R2022 || R2023
-                    val = param.AsElementId().IntegerValue.ToString();
+                    val = param.AsElementId().GetElementId().ToString();
 #else
                     val = param.AsElementId().Value.ToString();
 #endif
@@ -474,7 +474,7 @@ namespace ParameterWriter
                         if (lev != null)
                         {
                             Debug.WriteLine("Level is found as " + Enum.GetName(typeof(BuiltInParameter), bip)
-                                + " level id " + lev.Id.IntegerValue);
+                                + " level id " + lev.Id.GetElementId());
                             return lev;
                         }
                     }
